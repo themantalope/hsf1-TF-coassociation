@@ -1,0 +1,135 @@
+#########
+9/20/2016
+Matt
+#########
+This is the initial entry  of the project progress file. Analyses and datasets used up to this step will be described
+below.
+
+1) Datasets to be used:
+
+Cell lines from Mendillo's datasets and if they will be used going forward:
+
+BPE: not used, only 1 replicate, only ~200 peaks reported
+HMLER: used, only 1 replicate, ~100 peaks reported
+BPLER: used!, only 1 replicate but ~1120 peaks reported
+HME: not used, only 1 replicate and ~100 peaks reported
+MCF10: used, replicate 1 reports ~360 peaks but replicate 2 reports 36 peaks
+NCI1703: used, replicate 1 reports ~260 peaks but replicate 2 reports 27 peaks
+ZR57: used, each replicate reports ~200 peaks
+SW620: used for now - each replicate reports ~60 peaks but the positions do seem to be consistent
+HCT15: used for now - replicate 1 reports ~450 peaks but replicate 2 reports ~170
+HT29: used for now - replicate 1 reports ~260 peaks but replicate 2 reports ~500
+MCF7: used, replicate 1 shows ~50 peaks, replicate 2 shows ~230 peaks
+NCIH441: used, replicate 1 reports ~400 peaks, replicate 2 reports ~900 peaks
+SKBR3: used, ~857 peaks in replicate 1, ~1000 peaks in replicate 2
+NCIH838: used, ~2400 reported peaks in each replicate
+BT20: used, ~1700 peaks in replicate 1, ~2400 peaks in replicate 2
+Breast & Colon datasets: not used, came from patients
+
+Summary of used cell lines from Mendillo:
+All except for HME and BPE
+
+For these files, a concatenated (but not merged) bed file from both replicates will be used in determining the relation-
+ship of HSF1 peaks to hg18 TSSs. The final version of that file will merge peaks in order to identify regions where HSF1
+is binding. Peaks will be redetermined by locating the position of the HSE within the merged region. Analyses will be
+described in more detail below.
+
+
+Other files used in analyses:
+
+hg18_TSS.ranged.0.bed - bed file corresponding to UCSC hg18 assembly, each feature is a TSS with a range of 0 (marks
+the annotated TSS).
+
+
+
+2) Initial Analyses of Mendillo datasets:
+
+OK, after much bumbling around and figuring out how to use bedtools and what kinds of caveats working with this kind of
+data includes, the initial analysis of the Mendillo data has 1 major aims a) what are the targets of HSF1 in human
+cancer cells.
+
+Description of analyses:
+
+a) HSF1 targets in human cancer cells.
+HSF1 targets will be determined to be genes whose TSS is within 2kb of an HSF1 binding site as determined by Mendillo's
+datasets. However, the question about which TSSs/HSF1 binding sites to include from Mendillo's data is an important one
+since there is not perfect agreement/overlap of HSF1 binding sites between the various cell lines used in his study.
+Thus the method about which TSSs to mark as "potentially regulated by HSF1" is as follows:
+
+    1) for each cell line, note which TSSs have an HSF1 peak within 2 kb
+    2) for each TSS, count the number of times that an HSF1 binding site was found within 2kb of the TSS across all
+    datasets
+    3) filter the TSSs by the number of times it was found across datasets - this effectively serves as a filter to try
+    to remove TSSs that may correspond to noisy HSF1 peaks
+    4) for each filtered set of TSSs, go back and get the HSF1 peaks that corresponded to those TSSs
+    4) generate a ROC for each cutoff based on the HSF1 peaks generated in step 4 - a true positive is a peak that was
+    included because it was found in the number of datasets >= the cutoff and an HSE was found; a false positive is a
+    peak that was included but did not have a HSE; a false negative is a peak that was excluded but contained a HSE;
+    a true negative was a peak that was excluded and did not have a HSE
+
+The analysis shows that the optimum cutoff to use is 0.15 (corresponding to a peak occuring in 2 datasets, see the file
+"hsf1_binding_ROC_relaxed_HSE.pdf"). In this dataset, there were a total of 1770 HSF1 peaks. 189 were true positives,
+235 were false positives, 87 were false negatives and 1259 were true negatives. Thus making sure that a peak was
+included in at least 2 datasets removed a large number of HSF1 binding regions that did not have a HSE within them. For
+the false positives, we may be able to recover some of those peaks by expanding the region by a small amount (+/- 200bp)
+and searching again for the HSE. From the list of TSSs, these 189 peaks were found within 2kb of 918 TSSs (some of these
+TSSs are redundant, so the unique number will be smaller). See the "hsf1_hg18_TSS_peaks_2000kb.xlsx" file.
+
+
+##########
+9/26/2016
+Matt
+##########
+
+For the next analysis we wanted to know how patterns in HSF1 binding from ChIP-seq data were co-distributed with binding
+patterns of other transcription factors. To start off, we used 2 groups of transcription factors - those that are
+known to play a role in the regulation of the cell cycle, and other transcription factors from the published ENCODE
+project [1]. The datasets for the cell cycle specific transcription factors came from either ENCODE or were cited by [2].
+A directory called "cc_tf_bedfiles" has the corresponding data for each transcription factor that was used. ENCODE
+accession ids or GEO accession numbers for the dataset that was used should be found in the meta.txt file in each
+transcription factor subdirectory within the "cc_tf_bedfiles" directory. For the ENCODE files used from [1], an ENCODE
+files list pickle file will be available on box under the name "encode_files.pickle". 78 ENCODE datasets were used. Cell
+types used were of "epithelial" cell types for now. A list of the cell types included within the ENCODE datasets used
+in this part of the analysis is shown below:
+
+Ecc1
+Mcf10aes
+Hre
+Hmec
+Saec
+Hrpe
+Mcf7
+Rptec
+U87
+Hee
+Hcpe
+T47d
+U2os
+A549
+
+For a complete list of cell types available with [1], please see the file "human_encode_cell_types.txt".
+
+Description of analysis:
+
+For each TF dataset, the number of peaks within 2kb of a TSS was counted and the genomic average for binding near the
+TSS was computed as the number of peaks within 2b of a TSS divided by the total number of (unique) TSSs. The number of
+co-occurences of HSF1 were then counted, with a co-occurence defined as the peak of the TF binding site being within
+500 bp of an HSF1 region. The fraction of co-occurences within the set of HSF1 regions was then computed as the number
+of co-occurences divided by the total number of HSF1 regions. Finally, a "enrichment" ratio was computed for each tran-
+scription factor by dividing the fraction of HSF1 co-occurences by the TSS binding genomic average for each TF. Results
+of this analysis are available in the files "hsf1_features_cctf.xlsx" and "hsf1_features_encode.xlsx" in the "analysis_
+results" directory. For CC TFs, TFDP1 and E2F1 showed the greatest enrichment (3.2 and 2.9, respectively). Within the
+ENCODE datasets, there were a large number of TFs that showed enrichment above that of Pol2 and P300 (will be discussed
+later).
+
+Intermediate files from this analysis can be found in the "intermediate_files" folder. Relevant folders will include
+either "cctf" or "encode" in the directory name.
+
+
+Citations:
+
+1. Boyle AP, Araya CL, Brdlik C, et al. Comparative analysis of regulatory information and circuits across distant
+species. Nature. 2014;512(7515):453-456. doi:10.1038/nature13668.
+
+2. Fischer M, Grossmann P, Padi M, DeCaprio JA. Integration of TP53, DREAM, MMB-FOXM1 and RB-E2F target gene analyses
+identifies cell cycle gene regulatory networks. Nucleic Acids Res. 2016;44(13):6070-6086. doi:10.1093/nar/gkw523.

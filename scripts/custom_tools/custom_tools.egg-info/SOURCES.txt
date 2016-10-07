@@ -1,0 +1,7 @@
+setup.py
+chrom_utils/__init__.py
+chrom_utils/chrom_utils.py
+custom_tools.egg-info/PKG-INFO
+custom_tools.egg-info/SOURCES.txt
+custom_tools.egg-info/dependency_links.txt
+custom_tools.egg-info/top_level.txt
