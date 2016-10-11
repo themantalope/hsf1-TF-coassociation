@@ -150,14 +150,14 @@ for fp in file_pairs:
     # n_FN = len(neg_seqs) - n_TN
 
     if len(pos_features) > 0:
-        pos_fimo_df = chrom_utils.fimo_search_for_motif(pos)
+        pos_fimo_df = chrom_utils.fimo_search_for_motif(pos, thresh=1e-4)
         n_TP = len(set(pos_fimo_df["sequence name"].values.tolist()))
         n_FP = len(pos_features) - n_TP
     else:
         n_TP = n_FP = 0
 
     if len(neg_features) > 0:
-        neg_fimo_df = chrom_utils.fimo_search_for_motif(neg)
+        neg_fimo_df = chrom_utils.fimo_search_for_motif(neg, thresh=1e-4)
         n_FN = len(set(neg_fimo_df["sequence name"].values.tolist()))
         n_TN = len(neg_features) - n_FN
     else:

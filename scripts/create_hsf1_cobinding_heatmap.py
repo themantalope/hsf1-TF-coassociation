@@ -12,12 +12,12 @@ data = pd.read_excel(open(data_file))
 data.set_index("TF", inplace=True)
 
 row_labels = data.index.values.tolist()
-col_labels = [c for c in data.columns if "OR" in c]
+col_labels = [c for c in data.columns if "OR" in c and "HSF1 Regions OR" not in c]
 
 # print row_labels
 # print col_labels
 
-pv_data = data[[c for c in data.columns if "OR" in c]]
+pv_data = data[col_labels]
 
 log_pv_data = pv_data.values
 
@@ -41,6 +41,7 @@ hm = pdh.DendroHeatMap(log_pv_data,
                        row_labels=row_labels,
                        col_labels=col_labels,
                        window_height=8)
-
+hm.color_legend_title = "Fisher Exact Test Odds Ratio"
+hm.colormap = hm.yellowBlackBlue
 hm.show()
 hm.export(os.path.join(data_dir, "hsf1_HS_nHS_tf_cobinding_heatmap.pdf"))

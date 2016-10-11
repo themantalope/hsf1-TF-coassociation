@@ -10,7 +10,7 @@ import scipy.stats as st
 import numpy as np
 import inspect
 import numbers
-
+import math
 
 # cell_type_pattern = re.compile("(?<=Tfbs)([A-Z-0-9-a-z].*?)(?=[A-Z])")
 cell_type_tf_exp_pattern = re.compile("(?<=Tfbs)(?P<cell>[A-Z-0-9-a-z].*?)(?=[A-Z])(?P<tf>[A-Z-0-9-a-z].*?)(?=[A-Z])(?P<exp>[A-Z-0-9-a-z].*?)(?=\.bam)")
@@ -247,15 +247,20 @@ def convert_tuple_list_to_dataframe(tuplelist, row_t_idx = 0, col_t_idx = 1, val
 
 motif_database_dir = os.path.join(dir_path, "motif_databases")
 
-def fimo_search_for_motif(fasta_file, motif="MA0486.2", motif_database=os.path.join(motif_database_dir, "JASPAR", "JASPAR_CORE_2016_vertebrates.meme"), thresh=1e-4):
+def fimo_search_for_motif(fasta_file, motif="MA0486.2", motif_database=os.path.join(motif_database_dir, "JASPAR", "JASPAR_CORE_2016_vertebrates.meme"), thresh=1e-4, verbosity=0):
     if not os.path.isfile(fasta_file):
         raise IOError("{f} is not a file.".format(f=fasta_file))
     if not os.path.isfile(motif_database):
         raise IOError("{f} is not a file.".format(f=motif_database))
 
-    command_text = """fimo -motif {m} -verbosity 1 -thresh {th} -text {db} {f}""".format(m=motif, db=motif_database, f=fasta_file, th=thresh)
+
+    command_text = """fimo -motif {m} -verbosity {v} -thresh {th} -text {db} {f}""".format(m=motif, db=motif_database, f=fasta_file, th=thresh, v=verbosity)
     outtext = subprocess.Popen(command_text, shell=True, stdout=subprocess.PIPE)
-    return pd.read_table(StringIO.StringIO(outtext.stdout.read()))
+    text = outtext.stdout.read()
+    if not text:
+        return None
+    else:
+        return pd.read_table(StringIO.StringIO(text))
 
 def calculate_total_basepair_length(bed):
     length_count = 0
@@ -408,3 +413,17 @@ def compute_chisquare_with_yates_cobinding(n_regions_overlap,
     chi2, p, dof, ex = st.chi2_contingency(contingency)
 
     return chi2, p, dof, ex
+
+
+def rolling_sum(array, n=10):
+    if isinstance(array, list):
+        array = np.array(array)
+    elif not isinstance(array, np.ndarray):
+        raise  TypeError("'array' must be a list or numpy array.")
+
+    out = np.zeros((array.shape[0],))
+    for i in range(0, len(out)):
+        s = np.nansum(array[i:i+n])
+        out[i] = s
+
+    return out

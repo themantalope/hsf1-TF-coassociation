@@ -39,7 +39,7 @@ for cbf in cobinding_files:
         if abs(int(feature[-1])) <= 2000 and int(feature[-1]) != -1:
             if ":".join(feature.fields[0:3]) not in uniques:
                 good_fields.append(feature.fields)
-                uniques.append(":".join(feature.fields[0:3]))
+                uniques.append("-".join(feature.fields[0:3]))
 
     good_bed = pbt.BedTool(good_fields).sort()
     # print len(good_bed)
@@ -52,7 +52,7 @@ for cbf in cobinding_files:
     name_pairs = [(q["query"], q["symbol"]) for q in query["out"]]
 
     for feature in good_bed:
-        tss_pos_name = ":".join(feature.fields[0:3])
+        tss_pos_name = "-".join(feature.fields[0:3])
         tss_name = feature.name
         hsf1_feature_name = feature.fields[9]
         direction = feature.fields[4]
